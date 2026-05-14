@@ -180,7 +180,7 @@ async function processUrl(anthropic: Anthropic, url: string): Promise<Array<Reco
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 16384,
+    max_tokens: 32_000,
     system: SYSTEM,
     messages: [{ role: 'user', content: `Source URL: ${url}\n\n--- PAGE TEXT (polling + results sections) ---\n${stripped}` }],
   })
@@ -191,11 +191,19 @@ async function processUrl(anthropic: Anthropic, url: string): Promise<Array<Reco
     .join('\n')
 
   const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) return []
+  if (!jsonMatch) {
+    if (process.env.RESEARCH_DEBUG === '1') {
+      process.stdout.write(`\n[debug ${url}] no JSON; first 600 chars of model response:\n${text.slice(0, 600)}\n`)
+    }
+    return []
+  }
   let parsed: { polls?: unknown[]; actualResults?: unknown[]; actualMeta?: Record<string, unknown> }
   try {
     parsed = JSON.parse(jsonMatch[0])
-  } catch {
+  } catch (err) {
+    if (process.env.RESEARCH_DEBUG === '1') {
+      process.stdout.write(`\n[debug ${url}] JSON parse failed: ${(err as Error).message}\nFirst 400 chars of match: ${jsonMatch[0].slice(0, 400)}\n`)
+    }
     return []
   }
 

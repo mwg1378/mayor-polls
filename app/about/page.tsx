@@ -36,6 +36,20 @@ export default function AboutPage() {
       </section>
 
       <section>
+        <h2 className="mt-6 text-lg font-semibold">Ranked-choice voting (RCV)</h2>
+        <p className="mt-2">
+          Races that use RCV (NYC partisan primaries, San Francisco, Oakland, Minneapolis, Saint Paul) publish two distinct tallies:
+        </p>
+        <ul className="ml-6 mt-2 list-disc space-y-1">
+          <li><strong>First-choice tally</strong> — every candidate, vote share sums to ~100%. This is what pollsters measure ("if the election were today, who would you vote for"), so it's the only valid comparison universe for poll accuracy.</li>
+          <li><strong>Final round</strong> — after eliminations, typically the top 2 candidates with shares summing to 100% between them. Useful context, but not comparable to poll first-choice numbers.</li>
+        </ul>
+        <p className="mt-2">
+          We store both. <strong>Accuracy metrics only ever compare polls against first-choice results</strong> — never against the final round. RCV races display an <span className="rounded border border-purple-500/40 bg-purple-500/15 px-1 py-0.5 text-xs text-purple-300">RCV</span> badge.
+        </p>
+      </section>
+
+      <section>
         <h2 className="mt-6 text-lg font-semibold">Multi-candidate polls & accuracy</h2>
         <p className="mt-2">
           Mayoral primaries often have 5–10 viable candidates; meaningful margins aren't always top-1 minus top-2.

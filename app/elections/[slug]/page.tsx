@@ -67,6 +67,7 @@ export default async function ElectionPage({
 
       {sortedRaces.map((race) => {
         const actuals = (race.actualResults as CandidateResult[] | null) ?? null
+        const finalRound = (race.finalRoundResults as CandidateResult[] | null) ?? null
         const polls = race.polls.map(toPollRow)
         return (
           <section key={race.id} id={race.id} className="space-y-4 border-t border-border/60 pt-8 first:border-t-0 first:pt-0">
@@ -75,6 +76,14 @@ export default async function ElectionPage({
                 <h2 className="text-xl font-semibold">
                   {RACE_TYPE_LABELS[race.raceType]}
                   {race.party ? <span className="ml-2 text-base font-normal text-muted-foreground">({race.party} party)</span> : null}
+                  {race.isRcv ? (
+                    <span
+                      className="ml-2 inline-flex items-center rounded border border-purple-500/40 bg-purple-500/15 px-1.5 py-0.5 align-middle text-xs font-medium text-purple-300"
+                      title="Ranked-choice voting — first-choice preference is the comparison universe for polls"
+                    >
+                      RCV
+                    </span>
+                  ) : null}
                 </h2>
                 <div className="text-sm text-muted-foreground">
                   {fmtDate(race.electionDate)} · {race.polls.length} poll{race.polls.length === 1 ? '' : 's'}
@@ -104,18 +113,40 @@ export default async function ElectionPage({
             {actuals && actuals.length > 0 ? (
               <details className="rounded border border-border/60">
                 <summary className="cursor-pointer px-4 py-2 text-sm font-medium hover:bg-muted/40">
-                  Final result: {actuals[0].name} {actuals[0].pct.toFixed(1)}%
+                  {race.isRcv ? 'First-choice result' : 'Final result'}: {actuals[0].name} {actuals[0].pct.toFixed(1)}%
                   {actuals[1] ? ` · ${actuals[1].name} ${actuals[1].pct.toFixed(1)}%` : ''}
+                  {race.isRcv ? <span className="ml-2 text-xs text-muted-foreground">(matches poll universe)</span> : null}
                 </summary>
                 <ul className="divide-y divide-border/40 border-t border-border/60">
-                  {actuals.slice(0, 10).map((a, i) => (
+                  {actuals.slice(0, 12).map((a, i) => (
                     <li key={i} className="flex items-baseline justify-between px-4 py-2 text-sm">
                       <span className="flex items-baseline gap-2">
                         <span className={`text-xs ${partyColor(a.party)}`}>{a.party ?? ''}</span>
                         <span className={i === 0 ? 'font-medium' : ''}>{a.name}</span>
                         {a.isIncumbent ? <span className="text-xs text-muted-foreground">(inc.)</span> : null}
-                        {i === 0 ? <span className="text-xs text-emerald-400">winner</span> : null}
+                        {!race.isRcv && i === 0 ? <span className="text-xs text-emerald-400">winner</span> : null}
                         {a.advanced && i > 0 ? <span className="text-xs text-emerald-400">advanced</span> : null}
+                      </span>
+                      <span className="font-mono tabular-nums">{a.pct.toFixed(1)}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+
+            {finalRound && finalRound.length > 0 ? (
+              <details className="rounded border border-purple-500/30 bg-purple-500/5">
+                <summary className="cursor-pointer px-4 py-2 text-sm font-medium hover:bg-purple-500/10">
+                  Final round (after eliminations): {finalRound[0].name} {finalRound[0].pct.toFixed(1)}%
+                  {finalRound[1] ? ` · ${finalRound[1].name} ${finalRound[1].pct.toFixed(1)}%` : ''}
+                </summary>
+                <ul className="divide-y divide-border/40 border-t border-purple-500/30">
+                  {finalRound.map((a, i) => (
+                    <li key={i} className="flex items-baseline justify-between px-4 py-2 text-sm">
+                      <span className="flex items-baseline gap-2">
+                        <span className={`text-xs ${partyColor(a.party)}`}>{a.party ?? ''}</span>
+                        <span className={i === 0 ? 'font-medium' : ''}>{a.name}</span>
+                        {i === 0 ? <span className="text-xs text-emerald-400">winner</span> : null}
                       </span>
                       <span className="font-mono tabular-nums">{a.pct.toFixed(1)}%</span>
                     </li>

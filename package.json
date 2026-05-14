@@ -12,6 +12,7 @@
     "research:seed": "tsx scripts/research-seed.ts",
     "research:curated": "tsx scripts/research-curated.ts",
     "research:fill-results": "tsx scripts/fill-results.ts",
+    "research:mark-rcv": "tsx scripts/mark-rcv.ts",
     "research:import": "tsx scripts/import-jsonl.ts",
     "research:review": "tsx scripts/review-pending.ts"
   },

@@ -47,6 +47,7 @@ export default async function RacePage({
   if (!race) return notFound()
 
   const actuals = (race.actualResults as CandidateResult[] | null) ?? null
+  const finalRound = (race.finalRoundResults as CandidateResult[] | null) ?? null
   const polls = race.polls.map(toPollRow)
 
   // Decide which candidates to draw on the chart: union of actual top 6 and any poll-leading candidates.
@@ -99,23 +100,59 @@ export default async function RacePage({
         <h1 className="text-2xl font-bold tracking-tight">
           {race.electionYear} {RACE_TYPE_LABELS[race.raceType]}
           {race.party ? <span className="ml-2 text-base font-medium text-muted-foreground">({race.party} party)</span> : null}
+          {race.isRcv ? (
+            <span
+              className="ml-2 inline-flex items-center rounded border border-purple-500/40 bg-purple-500/15 px-1.5 py-0.5 align-middle text-xs font-medium text-purple-300"
+              title="Ranked-choice voting — first-choice preference is the comparison universe for polls"
+            >
+              RCV
+            </span>
+          ) : null}
         </h1>
         <div className="text-sm text-muted-foreground">Election: {fmtDate(race.electionDate)}</div>
       </header>
 
       {actuals && actuals.length > 0 ? (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Result</h2>
+          <h2 className="text-lg font-semibold">
+            {race.isRcv ? 'First-choice result' : 'Result'}
+            {race.isRcv ? (
+              <span className="ml-2 text-xs font-normal text-muted-foreground">(matches what pollsters measured)</span>
+            ) : null}
+          </h2>
           <ul className="divide-y divide-border/40 rounded border border-border/60">
-            {actuals.slice(0, 8).map((a, i) => (
+            {actuals.slice(0, 12).map((a, i) => (
               <li key={i} className="flex items-baseline justify-between px-4 py-2">
                 <span className="flex items-baseline gap-2">
                   <span className={`text-xs ${partyColor(a.party)}`}>{a.party ?? ''}</span>
                   <span className={i === 0 ? 'font-semibold' : ''}>
                     {a.name}
                     {a.isIncumbent ? <span className="ml-2 text-xs text-muted-foreground">(incumbent)</span> : null}
-                    {i === 0 ? <span className="ml-2 text-xs text-emerald-400">winner</span> : null}
+                    {!race.isRcv && i === 0 ? <span className="ml-2 text-xs text-emerald-400">winner</span> : null}
                     {a.advanced && i > 0 ? <span className="ml-2 text-xs text-emerald-400">advanced</span> : null}
+                  </span>
+                </span>
+                <span className="font-mono tabular-nums">{fmtPct(a.pct)}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {finalRound && finalRound.length > 0 ? (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">
+            Final round
+            <span className="ml-2 text-xs font-normal text-muted-foreground">(after eliminations — not used for poll accuracy)</span>
+          </h2>
+          <ul className="divide-y divide-border/40 rounded border border-border/60">
+            {finalRound.map((a, i) => (
+              <li key={i} className="flex items-baseline justify-between px-4 py-2">
+                <span className="flex items-baseline gap-2">
+                  <span className={`text-xs ${partyColor(a.party)}`}>{a.party ?? ''}</span>
+                  <span className={i === 0 ? 'font-semibold' : ''}>
+                    {a.name}
+                    {i === 0 ? <span className="ml-2 text-xs text-emerald-400">winner</span> : null}
                   </span>
                 </span>
                 <span className="font-mono tabular-nums">{fmtPct(a.pct)}</span>

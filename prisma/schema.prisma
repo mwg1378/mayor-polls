@@ -89,14 +89,22 @@ model Race {
   raceType      RaceType
   party         String?
   isOpenSeat    Boolean  @default(false)
-  // [{ name: string, party?: string, pct: number, isIncumbent?: boolean, advanced?: boolean }]
+  isRcv         Boolean  @default(false)
+  // For RCV: first-choice tally (matches what polls measure).
+  // For non-RCV: the only round.
+  // Shape: [{ name, party?, pct, isIncumbent?, advanced? }]
   actualResults Json?
-  // Convenience denormalized fields:
+  // For RCV: after-elimination final-round tally (typically top 2). Null for non-RCV.
+  // Shape: [{ name, party?, pct }]
+  finalRoundResults Json?
+  // Convenience denormalized fields. For RCV, these reference the FINAL-round winner
+  // and runner-up (since that's the ultimate result for accuracy-of-call purposes,
+  // but accuracy errors are still computed against actualResults = first choice).
   winnerName    String?
   winnerPct     Float?
   runnerUpName  String?
   runnerUpPct   Float?
-  topMargin     Float?   // winnerPct - runnerUpPct
+  topMargin     Float?
   notes         String?  @db.Text
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
