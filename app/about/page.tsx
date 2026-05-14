@@ -36,17 +36,31 @@ export default function AboutPage() {
       </section>
 
       <section>
-        <h2 className="mt-6 text-lg font-semibold">Multi-candidate polls</h2>
+        <h2 className="mt-6 text-lg font-semibold">Multi-candidate polls & accuracy</h2>
         <p className="mt-2">
           Mayoral primaries often have 5–10 viable candidates; meaningful margins aren't always top-1 minus top-2.
           We store each poll's <strong>full candidate list</strong> and the race's <strong>full final result</strong>,
-          and compute four accuracy metrics per poll, none privileged over the others:
+          and surface several accuracy metrics per poll:
         </p>
+        <p className="mt-3 font-medium">Primary metric — vote-weighted error</p>
+        <p className="mt-2">
+          Lower is better. Computed in two steps:
+        </p>
+        <ol className="ml-6 mt-2 list-decimal space-y-1">
+          <li><strong>Allocate undecideds proportionately.</strong> Each candidate's projected share = their polled
+            % × <code>100 / (100 − undecided%)</code>. So in a poll with 10% undecided, a 35% candidate is treated
+            as projecting 38.9.</li>
+          <li><strong>Weight each candidate by √(actual share).</strong> For every candidate i in the final result, take
+            <code>|projected_i − actual_i| × √actual_i</code>. Sum those, then divide by <code>Σ √actual_i</code>.
+            This counts higher performers more heavily — being 3 points off on the eventual winner matters more
+            than being 3 points off on a 4% also-ran — without ignoring smaller candidates entirely.</li>
+        </ol>
+        <p className="mt-3 font-medium">Secondary metrics</p>
         <ul className="ml-6 mt-2 list-disc space-y-1">
-          <li><strong>Called winner</strong> — did the poll's leading candidate match the actual winner?</li>
-          <li><strong>Called top 2</strong> — did the poll's top 2 (set, order-independent) match the actual top 2?</li>
-          <li><strong>Mean per-candidate error</strong> — average <code>|poll_pct − actual_pct|</code> across candidates that appear in both the poll and the result.</li>
+          <li><strong>Called winner</strong> — binary: did the poll's leading candidate match the actual winner?</li>
+          <li><strong>Called top 2</strong> — binary: did the poll's top 2 (set, order-independent) match the actual top 2?</li>
           <li><strong>Top-two margin error</strong> — <code>|poll(top1−top2) − actual(top1−top2)|</code>, the traditional 538-style metric.</li>
+          <li><strong>Mean per-candidate error</strong> — unweighted average <code>|poll_pct − actual_pct|</code>.</li>
         </ul>
       </section>
 

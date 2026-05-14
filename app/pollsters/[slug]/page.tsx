@@ -42,6 +42,7 @@ export default async function PollsterPage({
       raceId: p.raceId,
       candidates: p.candidates as CandidateResult[],
       actuals: p.race.actualResults as CandidateResult[],
+      undecidedPct: p.undecidedPct,
       daysToElection: p.daysToElection,
       sponsorType: p.sponsorType,
       raceType: p.race.raceType,

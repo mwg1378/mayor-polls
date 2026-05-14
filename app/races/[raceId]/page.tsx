@@ -12,6 +12,7 @@ import {
   calledWinner,
   meanCandidateError,
   topTwoMarginError,
+  voteWeightedError,
   type CandidateResult,
 } from '@/lib/accuracy'
 
@@ -35,6 +36,7 @@ export default async function RacePage({
           race: {
             select: {
               id: true, citySlug: true, raceType: true, electionYear: true, party: true,
+              actualResults: true,
               city: { select: { name: true, stateCode: true } },
             },
           },
@@ -69,6 +71,7 @@ export default async function RacePage({
           raceId,
           candidates: p.candidates as CandidateResult[],
           actuals,
+          undecidedPct: p.undecidedPct,
           daysToElection: p.daysToElection,
           sponsorType: p.sponsorType,
           raceType: race.raceType,
@@ -80,6 +83,7 @@ export default async function RacePage({
           calledTopTwo: calledTopTwo(sp),
           meanError: meanCandidateError(sp),
           marginError: topTwoMarginError(sp),
+          weightedError: voteWeightedError(sp),
         }
       })
     : []
@@ -151,6 +155,7 @@ export default async function RacePage({
                   <th className="px-3 py-2 text-left font-medium">End date</th>
                   <th className="px-3 py-2 text-left font-medium">Winner?</th>
                   <th className="px-3 py-2 text-left font-medium">Top 2?</th>
+                  <th className="px-3 py-2 text-left font-medium">Vote-wt err</th>
                   <th className="px-3 py-2 text-left font-medium">Per-cand err</th>
                   <th className="px-3 py-2 text-left font-medium">Margin err</th>
                 </tr>
@@ -164,6 +169,7 @@ export default async function RacePage({
                     </td>
                     <td className="px-3 py-2 font-mono">{boolBadge(s.calledWinner)}</td>
                     <td className="px-3 py-2 font-mono">{boolBadge(s.calledTopTwo)}</td>
+                    <td className="px-3 py-2 font-mono">{s.weightedError == null ? '—' : `${s.weightedError.toFixed(2)}`}</td>
                     <td className="px-3 py-2 font-mono">{s.meanError == null ? '—' : `${s.meanError.toFixed(1)}`}</td>
                     <td className="px-3 py-2 font-mono">{s.marginError == null ? '—' : `${s.marginError.toFixed(1)}`}</td>
                   </tr>

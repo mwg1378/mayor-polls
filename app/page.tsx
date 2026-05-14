@@ -3,6 +3,7 @@ import { prisma } from '@/prisma/client'
 import { PollsTable } from '@/components/polls-table'
 import { fmtNum } from '@/lib/format'
 import type { Candidate, PollRowData } from '@/components/poll-row'
+import type { CandidateResult } from '@/lib/accuracy'
 
 export const revalidate = 300
 
@@ -20,6 +21,7 @@ export default async function Home() {
         race: {
           select: {
             id: true, citySlug: true, raceType: true, electionYear: true, party: true,
+            actualResults: true,
             city: { select: { name: true, stateCode: true } },
           },
         },
@@ -102,10 +104,22 @@ export function toPollRow(p: {
   population: PollRowData['population']
   sourceUrl: string
   pollster: { slug: string; name: string }
-  race: { id: string; citySlug: string; raceType: PollRowData['race']['raceType']; electionYear: number; party: string | null; city: { name: string; stateCode: string } }
+  race: {
+    id: string
+    citySlug: string
+    raceType: PollRowData['race']['raceType']
+    electionYear: number
+    party: string | null
+    actualResults?: unknown
+    city: { name: string; stateCode: string }
+  }
 }): PollRowData {
   return {
     ...p,
     candidates: (p.candidates as Candidate[]) ?? [],
+    race: {
+      ...p.race,
+      actualResults: (p.race.actualResults as CandidateResult[] | null) ?? null,
+    },
   }
 }

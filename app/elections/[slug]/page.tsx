@@ -36,6 +36,7 @@ export default async function ElectionPage({
           race: {
             select: {
               id: true, citySlug: true, raceType: true, electionYear: true, party: true,
+              actualResults: true,
               city: { select: { name: true, stateCode: true } },
             },
           },

@@ -13,6 +13,7 @@ export type ScoredPoll = {
   raceId: string
   candidates: CandidateResult[]   // poll's measurement
   actuals: CandidateResult[]      // race's actual result
+  undecidedPct?: number           // for allocating undecided proportionately
   daysToElection: number
   sponsorType: SponsorType
   raceType: RaceType
@@ -75,6 +76,41 @@ export function topTwoMarginError(poll: ScoredPoll): number | null {
   return Math.abs(pollMargin - actualMargin)
 }
 
+/**
+ * Vote-weighted error.
+ *
+ * Step 1: allocate undecided proportionately — multiply each candidate's polled %
+ * by 100 / (100 − undecided). A 35% candidate in a poll with 10% undecided becomes
+ * 35 * 100/90 = 38.9 projected.
+ *
+ * Step 2: for each candidate that appears in the actual result, compute
+ *   |projected − actual| * sqrt(actual)
+ * sum these, divide by sum(sqrt(actual)).
+ *
+ * Candidates in the actual but not in the poll contribute |0 − actual| * sqrt(actual).
+ * Candidates in the poll but not in the actual are ignored (they didn't materially exist).
+ *
+ * Lower is better.
+ */
+export function voteWeightedError(poll: ScoredPoll): number | null {
+  if (poll.actuals.length === 0) return null
+  const undecided = Math.max(0, Math.min(99.99, poll.undecidedPct ?? 0))
+  const allocator = 100 / (100 - undecided)
+
+  let sumWeighted = 0
+  let sumWeights = 0
+  for (const a of poll.actuals) {
+    if (a.pct <= 0) continue
+    const weight = Math.sqrt(a.pct)
+    const polled = matchActual(a.name, poll.candidates)
+    const projected = polled ? polled.pct * allocator : 0
+    sumWeighted += Math.abs(projected - a.pct) * weight
+    sumWeights += weight
+  }
+  if (sumWeights === 0) return null
+  return sumWeighted / sumWeights
+}
+
 function sortByPct(cs: CandidateResult[]): CandidateResult[] {
   return [...cs].sort((a, b) => b.pct - a.pct)
 }
@@ -90,16 +126,28 @@ export type AggregateStats = {
   medianCandidateError: number | null
   meanCandidateError: number | null
   medianMarginError: number | null
+  medianWeightedError: number | null
+  meanWeightedError: number | null
 }
 
 export function computeAggregate(polls: ScoredPoll[]): AggregateStats {
   if (polls.length === 0) {
-    return { n: 0, pctCalledWinner: null, pctCalledTopTwo: null, medianCandidateError: null, meanCandidateError: null, medianMarginError: null }
+    return {
+      n: 0,
+      pctCalledWinner: null,
+      pctCalledTopTwo: null,
+      medianCandidateError: null,
+      meanCandidateError: null,
+      medianMarginError: null,
+      medianWeightedError: null,
+      meanWeightedError: null,
+    }
   }
   const winners = polls.map(calledWinner).filter((x): x is boolean => x !== null)
   const topTwos = polls.map(calledTopTwo).filter((x): x is boolean => x !== null)
   const candErrors = polls.map(meanCandidateError).filter((x): x is number => x !== null)
   const marginErrors = polls.map(topTwoMarginError).filter((x): x is number => x !== null)
+  const weightedErrors = polls.map(voteWeightedError).filter((x): x is number => x !== null)
 
   return {
     n: polls.length,
@@ -108,6 +156,8 @@ export function computeAggregate(polls: ScoredPoll[]): AggregateStats {
     medianCandidateError: median(candErrors),
     meanCandidateError: candErrors.length > 0 ? candErrors.reduce((s, e) => s + e, 0) / candErrors.length : null,
     medianMarginError: median(marginErrors),
+    medianWeightedError: median(weightedErrors),
+    meanWeightedError: weightedErrors.length > 0 ? weightedErrors.reduce((s, e) => s + e, 0) / weightedErrors.length : null,
   }
 }
 
