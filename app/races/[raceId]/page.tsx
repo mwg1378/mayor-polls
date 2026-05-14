@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/prisma/client'
 import { PollsTable } from '@/components/polls-table'
-import { RacePollChart, type ChartPoll } from '@/components/race-poll-chart'
+import { RaceCandidateChart, type ChartPoll } from '@/components/race-candidate-chart'
+import { CandidateComparison } from '@/components/candidate-comparison'
 import { fmtDate, fmtPct } from '@/lib/format'
 import { partyColor, RACE_TYPE_LABELS } from '@/lib/labels'
 import { toPollRow } from '@/app/page'
@@ -120,11 +121,16 @@ export default async function RacePage({
         </section>
       ) : null}
 
-      {chartPolls.length > 0 ? (
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold">Polls vs. actual result</h2>
+        <CandidateComparison polls={polls} actuals={actuals} />
+      </section>
+
+      {chartPolls.length >= 2 ? (
         <section className="space-y-2">
           <h2 className="text-lg font-semibold">Polls over time</h2>
           <div className="rounded border border-border/60 p-3">
-            <RacePollChart
+            <RaceCandidateChart
               polls={chartPolls}
               electionDate={race.electionDate.toISOString()}
               actuals={actuals}

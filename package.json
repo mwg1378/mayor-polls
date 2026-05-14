@@ -11,6 +11,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "research:seed": "tsx scripts/research-seed.ts",
     "research:curated": "tsx scripts/research-curated.ts",
+    "research:fill-results": "tsx scripts/fill-results.ts",
     "research:import": "tsx scripts/import-jsonl.ts",
     "research:review": "tsx scripts/review-pending.ts"
   },

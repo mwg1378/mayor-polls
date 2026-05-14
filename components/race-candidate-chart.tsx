@@ -23,7 +23,7 @@ export type ActualResult = { name: string; pct: number }
 
 const PALETTE = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#a855f7', '#06b6d4', '#ec4899', '#84cc16', '#fb923c', '#6366f1']
 
-export function RacePollChart({
+export function RaceCandidateChart({
   polls,
   electionDate,
   actuals,
@@ -32,9 +32,13 @@ export function RacePollChart({
   polls: ChartPoll[]
   electionDate: string
   actuals: ActualResult[] | null
-  topCandidateNames: string[] // which candidate names to draw lines for (typically top 5-6)
+  topCandidateNames?: string[] // optional override; defaults to anyone ≥8% in any poll or actual
 }) {
   if (polls.length === 0) return null
+
+  // Auto-derive top candidates if not supplied: anyone ≥8% in any poll OR actual.
+  const names = topCandidateNames ?? deriveTopCandidates(polls, actuals)
+  if (names.length === 0) return null
 
   // Build wide-format data: one row per poll endDate.
   const data = polls
@@ -51,7 +55,7 @@ export function RacePollChart({
   const electionT = new Date(electionDate).getTime()
 
   const allValues = data.flatMap((d) =>
-    topCandidateNames.map((n) => (typeof d[n] === 'number' ? (d[n] as number) : Number.NaN)).filter((x) => !Number.isNaN(x)),
+    names.map((n) => (typeof d[n] === 'number' ? (d[n] as number) : Number.NaN)).filter((x) => !Number.isNaN(x)),
   )
   const yMin = Math.max(0, Math.min(...allValues) - 5)
   const yMax = Math.min(100, Math.max(...allValues) + 5)
@@ -84,11 +88,11 @@ export function RacePollChart({
             label={{ value: 'Election', position: 'top', fill: 'currentColor', fontSize: 11 }}
           />
           {(actuals ?? []).map((a, i) =>
-            topCandidateNames.includes(a.name) ? (
+            names.includes(a.name) ? (
               <ReferenceLine
                 key={`actual-${i}`}
                 y={a.pct}
-                stroke={PALETTE[topCandidateNames.indexOf(a.name) % PALETTE.length]}
+                stroke={PALETTE[names.indexOf(a.name) % PALETTE.length]}
                 strokeOpacity={0.5}
                 strokeDasharray="2 4"
               />
@@ -100,7 +104,7 @@ export function RacePollChart({
             formatter={(v: unknown, name) => [`${(v as number).toFixed(1)}%`, name as string]}
           />
           <Legend wrapperStyle={{ fontSize: 11 }} />
-          {topCandidateNames.map((name, i) => (
+          {names.map((name, i) => (
             <Line
               key={name}
               type="monotone"
@@ -116,4 +120,23 @@ export function RacePollChart({
       </ResponsiveContainer>
     </div>
   )
+}
+
+function deriveTopCandidates(polls: ChartPoll[], actuals: ActualResult[] | null): string[] {
+  const THRESHOLD = 8
+  const max = new Map<string, number>()
+  for (const p of polls) {
+    for (const c of p.candidates) {
+      const prev = max.get(c.name) ?? 0
+      if (c.pct > prev) max.set(c.name, c.pct)
+    }
+  }
+  for (const a of actuals ?? []) {
+    const prev = max.get(a.name) ?? 0
+    if (a.pct > prev) max.set(a.name, a.pct)
+  }
+  return [...max.entries()]
+    .filter(([, v]) => v >= THRESHOLD)
+    .sort((a, b) => b[1] - a[1])
+    .map(([n]) => n)
 }

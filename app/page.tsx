@@ -53,6 +53,9 @@ export default async function Home() {
           </Link>
         </div>
         <PollsTable polls={recentPolls} />
+        <div className="text-xs text-muted-foreground">
+          Browse by election: <Link href="/elections" className="hover:text-foreground hover:underline">/elections</Link>
+        </div>
       </section>
 
       <section className="rounded border border-border/60 bg-muted/30 p-5">

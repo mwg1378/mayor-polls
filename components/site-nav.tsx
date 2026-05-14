@@ -2,8 +2,8 @@ import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
 
 const links = [
+  { href: '/elections', label: 'Elections' },
   { href: '/polls', label: 'Polls' },
-  { href: '/cities', label: 'Cities' },
   { href: '/pollsters', label: 'Pollsters' },
   { href: '/accuracy', label: 'Accuracy' },
   { href: '/about', label: 'About' },
